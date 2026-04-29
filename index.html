@@ -236,6 +236,88 @@ input[type="text"]:focus { border-color: var(--yellow); background: rgba(255,255
 .winner-label { font-size: 0.78rem; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin: 6px 0 4px; }
 .winner-name-big { font-family: 'Bangers', cursive; font-size: 2.8rem; letter-spacing: 2px; }
 
+/* ── Tabs ─────────────────────────────────────────── */
+.tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.tab-btn {
+  flex: 1; padding: 9px 6px; border: 1.5px solid var(--border);
+  border-radius: 10px; background: transparent;
+  color: var(--muted); font-family: 'Nunito', sans-serif;
+  font-weight: 900; font-size: 0.8rem; cursor: pointer;
+  transition: all 0.15s; letter-spacing: 0.5px;
+}
+.tab-btn.active { background: var(--yellow); border-color: var(--yellow); color: #1a1a2e; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Leaderboard Table ───────────────────────────── */
+.lb-table { width: 100%; border-collapse: collapse; }
+.lb-table th {
+  font-size: 0.68rem; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--muted); padding: 4px 8px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.lb-table td { padding: 8px 8px; font-size: 0.88rem; font-weight: 700; vertical-align: middle; }
+.lb-table tr:not(:last-child) td { border-bottom: 1px solid rgba(255,255,255,0.05); }
+.lb-table tr.me-row td { background: rgba(255,209,102,0.07); }
+.lb-rank { font-family: 'Bangers', cursive; font-size: 1.2rem; color: var(--muted); width: 28px; }
+.lb-rank.gold   { color: #ffd166; }
+.lb-rank.silver { color: #c0c0c0; }
+.lb-rank.bronze { color: #cd7f32; }
+.lb-swatch { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; flex-shrink:0; }
+.lb-name { display:flex; align-items:center; }
+.lb-num { text-align: right; font-variant-numeric: tabular-nums; }
+.lb-you { font-size:0.65rem; letter-spacing:1px; text-transform:uppercase;
+  background:var(--mint); color:#1a1a2e; border-radius:4px; padding:1px 5px;
+  margin-left:6px; font-weight:900; }
+.lb-empty { text-align:center; color:var(--muted); font-size:0.85rem; padding:16px 0; }
+
+/* ── You Died Overlay ────────────────────────────── */
+#youDiedOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+#youDiedOverlay.active { display: flex; }
+.yd-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 80% 50% at 50% 50%, rgba(180,0,40,0.55) 0%, rgba(10,18,30,0.75) 100%);
+  animation: ydFadeIn 0.6s ease forwards;
+}
+@keyframes ydFadeIn { from { opacity:0 } to { opacity:1 } }
+.yd-content {
+  position: relative; z-index: 1; text-align: center;
+  animation: ydDrop 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+@keyframes ydDrop { from { opacity:0; transform: scale(0.5) translateY(-40px); } to { opacity:1; transform: none; } }
+.yd-skull { font-size: 5rem; line-height: 1; filter: drop-shadow(0 0 20px rgba(255,60,60,0.8)); }
+.yd-title {
+  font-family: 'Bangers', cursive;
+  font-size: 5rem; letter-spacing: 6px; line-height: 1;
+  color: #ff3c3c;
+  text-shadow: 0 0 30px rgba(255,60,60,0.9), 0 4px 0 rgba(0,0,0,0.5);
+  margin: 8px 0;
+}
+.yd-place {
+  font-family: 'Bangers', cursive; font-size: 1.6rem; letter-spacing: 3px;
+  color: var(--muted); margin-bottom: 6px;
+}
+.yd-stats {
+  font-size: 0.9rem; color: rgba(255,255,255,0.7);
+  background: rgba(0,0,0,0.35); border-radius: 10px; padding: 8px 20px;
+  margin-top: 6px; display: inline-block;
+}
+.yd-spectate {
+  margin-top: 16px; font-size: 0.82rem; letter-spacing: 3px;
+  text-transform: uppercase; color: rgba(255,255,255,0.4);
+  animation: ydPulse 1.6s ease-in-out infinite;
+}
+@keyframes ydPulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
 /* ── Canvas ──────────────────────────────────────── */
 #gameCanvas {
   display: block;
@@ -407,6 +489,7 @@ input[type="text"]:focus { border-color: var(--yellow); background: rgba(255,255
     <div class="card-label">Your Name</div>
     <input type="text" id="inputName" placeholder="Enter your name…" maxlength="14" autocomplete="off" style="letter-spacing:1px;text-transform:none;">
     <button class="btn btn-gold" onclick="goToCreateJoin()">Play Now →</button>
+    <button class="btn btn-ghost" style="margin-top:4px" onclick="showAllTimeLeaderboard()">📊 All-Time Leaderboard</button>
   </div>
   <div class="controls-hint" id="controlsHint">
     ← → or A D &nbsp;·&nbsp; W / ↑ to Jump<br>
@@ -483,13 +566,58 @@ input[type="text"]:focus { border-color: var(--yellow); background: rgba(255,255
   </div>
 </div>
 
+<!-- ══════════ YOU DIED OVERLAY ══════════ -->
+<div id="youDiedOverlay">
+  <div class="yd-bg"></div>
+  <div class="yd-content">
+    <div class="yd-skull">💀</div>
+    <div class="yd-title">YOU DIED</div>
+    <div class="yd-place" id="ydPlace"></div>
+    <div class="yd-stats" id="ydStats"></div>
+    <div class="yd-spectate">👁 spectating<span class="dots"></span></div>
+  </div>
+</div>
+
 <!-- ══════════ GAME OVER ══════════ -->
 <div class="screen" id="gameOverScreen">
-  <div class="logo" style="font-size:2.8rem">GAME OVER</div>
+  <div class="logo" style="font-size:2.4rem">GAME OVER</div>
   <br>
-  <div class="card">
-    <div class="winner-block" id="winnerBlock"></div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('tabWinner')">🏆 Winner</button>
+    <button class="tab-btn"       onclick="switchTab('tabMatch')">⚔️ Match</button>
+    <button class="tab-btn"       onclick="switchTab('tabAllTime')">📊 All-Time</button>
   </div>
+
+  <!-- Winner tab -->
+  <div class="tab-panel active" id="tabWinner">
+    <div class="card">
+      <div class="winner-block" id="winnerBlock"></div>
+    </div>
+  </div>
+
+  <!-- Match stats tab -->
+  <div class="tab-panel" id="tabMatch">
+    <div class="card" style="padding:14px">
+      <table class="lb-table" id="matchTable"></table>
+    </div>
+  </div>
+
+  <!-- All-time tab -->
+  <div class="tab-panel" id="tabAllTime">
+    <div class="card" style="padding:14px">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="tab-btn active" id="atWinsBtn"   onclick="switchAtTab('wins')"  style="font-size:0.75rem">🏆 Wins</button>
+        <button class="tab-btn"       id="atDmgBtn"     onclick="switchAtTab('damage')" style="font-size:0.75rem">💥 Damage</button>
+      </div>
+      <table class="lb-table" id="allTimeTable"></table>
+    </div>
+    <div style="text-align:center;margin-top:6px">
+      <button class="btn btn-ghost" style="width:auto;padding:6px 16px;font-size:0.78rem" onclick="clearAllTime()">🗑 Clear Records</button>
+    </div>
+  </div>
+
+  <br>
   <div id="hostRestartArea">
     <button class="btn btn-mint" onclick="hostRestartGame()">🔄 Play Again</button>
   </div>
@@ -499,6 +627,19 @@ input[type="text"]:focus { border-color: var(--yellow); background: rgba(255,255
   <button class="btn btn-ghost" style="margin-top:8px" onclick="leaveLobby()">🚪 Leave</button>
 </div>
 
+<!-- ══════════ ALL-TIME LEADERBOARD (menu modal) ══════════ -->
+<div class="screen" id="lbScreen">
+  <h2>📊 All-Time Records</h2>
+  <div class="tabs" style="margin-bottom:14px">
+    <button class="tab-btn active" id="lbWinsBtn"  onclick="switchLbTab('wins')">🏆 Most Wins</button>
+    <button class="tab-btn"       id="lbDmgBtn"   onclick="switchLbTab('damage')">💥 Most Damage</button>
+  </div>
+  <div class="card" style="padding:14px">
+    <table class="lb-table" id="lbTable"></table>
+  </div>
+  <button class="btn btn-ghost" style="margin-top:8px" onclick="showScreen('menuScreen')">← Back</button>
+</div>
+
 <script>
 'use strict';
 
@@ -506,6 +647,110 @@ input[type="text"]:focus { border-color: var(--yellow); background: rgba(255,255
 //  DEVICE / MOBILE
 // ══════════════════════════════════════════════════════
 let isMobile = false;
+let atTab = 'wins';   // all-time sub-tab
+let lbTab = 'wins';   // lb screen sub-tab
+let youDiedShown = false;
+
+// ── localStorage leaderboard ──────────────────────
+function lbLoad() {
+  try { return JSON.parse(localStorage.getItem('ccbr_lb') || '{}'); } catch { return {}; }
+}
+function lbSave(data) {
+  try { localStorage.setItem('ccbr_lb', JSON.stringify(data)); } catch {}
+}
+function lbAddResult(name, won, damageDealt) {
+  const db = lbLoad();
+  if (!db[name]) db[name] = { wins:0, damage:0, games:0 };
+  db[name].games++;
+  if (won) db[name].wins++;
+  db[name].damage = (db[name].damage || 0) + damageDealt;
+  lbSave(db);
+}
+function clearAllTime() {
+  if (!confirm('Clear all all-time records?')) return;
+  localStorage.removeItem('ccbr_lb');
+  renderAllTimeTable(atTab);
+}
+
+// ── Tab helpers ───────────────────────────────────
+function switchTab(id) {
+  document.querySelectorAll('#gameOverScreen .tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#gameOverScreen .tabs .tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['tabWinner','tabMatch','tabAllTime'][i] === id);
+  });
+  document.getElementById(id).classList.add('active');
+  if (id === 'tabAllTime') renderAllTimeTable(atTab);
+}
+function switchAtTab(tab) {
+  atTab = tab;
+  document.getElementById('atWinsBtn').classList.toggle('active', tab==='wins');
+  document.getElementById('atDmgBtn').classList.toggle('active', tab==='damage');
+  renderAllTimeTable(tab);
+}
+function switchLbTab(tab) {
+  lbTab = tab;
+  document.getElementById('lbWinsBtn').classList.toggle('active', tab==='wins');
+  document.getElementById('lbDmgBtn').classList.toggle('active', tab==='damage');
+  renderLbTable(tab);
+}
+
+// ── Leaderboard table renderers ───────────────────
+function rankEmoji(i) { return ['🥇','🥈','🥉'][i] || (i+1)+'.'; }
+function rankClass(i) { return ['gold','silver','bronze'][i] || ''; }
+
+function renderAllTimeTable(tab) {
+  const db   = lbLoad();
+  const rows = Object.entries(db)
+    .map(([name,d]) => ({ name, wins:d.wins||0, damage:d.damage||0, games:d.games||0 }))
+    .sort((a,b) => tab==='wins' ? b.wins-a.wins : b.damage-a.damage);
+  const me   = myName;
+  const el   = document.getElementById('allTimeTable');
+  if (!el) return;
+  if (!rows.length) { el.innerHTML = `<tr><td class="lb-empty" colspan="3">No records yet — play some games!</td></tr>`; return; }
+  const col  = tab==='wins' ? 'Wins' : 'Damage';
+  el.innerHTML = `<thead><tr><th>#</th><th>Player</th><th style="text-align:right">${col}</th></tr></thead><tbody>`
+    + rows.map((r,i) => `<tr class="${r.name===me?'me-row':''}">
+      <td class="lb-rank ${rankClass(i)}">${rankEmoji(i)}</td>
+      <td><div class="lb-name">${esc(r.name)}${r.name===me?'<span class="lb-you">YOU</span>':''}</div></td>
+      <td class="lb-num">${tab==='wins' ? r.wins : r.damage.toLocaleString()}</td>
+    </tr>`).join('')+'</tbody>';
+}
+
+function renderLbTable(tab) {
+  const db   = lbLoad();
+  const rows = Object.entries(db)
+    .map(([name,d]) => ({ name, wins:d.wins||0, damage:d.damage||0, games:d.games||0 }))
+    .sort((a,b) => tab==='wins' ? b.wins-a.wins : b.damage-a.damage);
+  const me   = myName;
+  const el   = document.getElementById('lbTable');
+  if (!el) return;
+  if (!rows.length) { el.innerHTML = `<tr><td class="lb-empty" colspan="3">No records yet!</td></tr>`; return; }
+  const col  = tab==='wins' ? 'Wins' : 'Damage';
+  el.innerHTML = `<thead><tr><th>#</th><th>Player</th><th style="text-align:right">${col}</th></tr></thead><tbody>`
+    + rows.map((r,i) => `<tr class="${r.name===me?'me-row':''}">
+      <td class="lb-rank ${rankClass(i)}">${rankEmoji(i)}</td>
+      <td><div class="lb-name">${esc(r.name)}${r.name===me?'<span class="lb-you">YOU</span>':''}</div></td>
+      <td class="lb-num">${tab==='wins' ? r.wins : r.damage.toLocaleString()}</td>
+    </tr>`).join('')+'</tbody>';
+}
+
+function renderMatchTable(matchResults) {
+  // matchResults: [{name, color, id, placement, damage, hits}]
+  const el = document.getElementById('matchTable');
+  if (!el) return;
+  el.innerHTML = `<thead><tr><th>#</th><th>Player</th><th style="text-align:right">💥 Hits</th></tr></thead><tbody>`
+    + matchResults.map((r,i) => `<tr class="${r.id===myId?'me-row':''}">
+      <td class="lb-rank ${rankClass(i)}">${rankEmoji(i)}</td>
+      <td><div class="lb-name"><span class="lb-swatch" style="background:${r.color}"></span>${esc(r.name)}${r.id===myId?'<span class="lb-you">YOU</span>':''}</div></td>
+      <td class="lb-num">${r.hits}</td>
+    </tr>`).join('')+'</tbody>';
+}
+
+function showAllTimeLeaderboard() {
+  myName = document.getElementById('inputName').value.trim() || myName || 'Player';
+  renderLbTable(lbTab);
+  showScreen('lbScreen');
+}
 
 // Auto-detect on load
 (function detectDevice() {
@@ -832,7 +1077,7 @@ function onClientReceive(d) {
     applyState(d);
   }
   if (d.type === 'gameOver') {
-    handleGameOver(d.winnerId, d.winnerName, d.winnerColor);
+    handleGameOver(d.winnerId, d.winnerName, d.winnerColor, d.matchResults || []);
   }
 }
 
@@ -913,6 +1158,8 @@ function hostRestartGame() {
 }
 
 function launchGame() {
+  youDiedShown = false;
+  hideYouDied();
   initGameState();
   setupInput();
   showScreen('gameScreen');
@@ -947,6 +1194,9 @@ function initGameState() {
       name: lp.name,
       idx: lp.idx,
       inp: { left:false, right:false, up:false, throw:false },
+      damageDealt: 0,
+      hits: 0,
+      placement: 0,
     };
   });
 }
@@ -1006,7 +1256,10 @@ function pushInput() {
 //  GAME LOOP
 // ══════════════════════════════════════════════════════
 function gameLoop() {
-  if (isHost && gs && gs.phase === 'playing') updatePhysics();
+  if (isHost && gs && gs.phase === 'playing') {
+    updatePhysics();
+    checkLocalPlayerDied();  // host's own player
+  }
   renderGame();
   frame++;
   raf = requestAnimationFrame(gameLoop);
@@ -1098,8 +1351,13 @@ function updatePhysics() {
     if (pl.y > CFG.H + 80) {
       pl.lives--;
       sfx('die');
-      if (pl.lives <= 0) { pl.lives = 0; pl.alive = false; pl.respawn = 0; checkWin(); }
-      else               { pl.alive = false; pl.respawn = CFG.RESPAWN_FRAMES; }
+      if (pl.lives <= 0) {
+        pl.lives = 0; pl.alive = false; pl.respawn = 0;
+        pl.placement = Object.values(gs.players).filter(p => p.lives > 0).length + 1;
+        checkWin();
+      } else {
+        pl.alive = false; pl.respawn = CFG.RESPAWN_FRAMES;
+      }
     }
   }
 
@@ -1140,8 +1398,19 @@ function updatePhysics() {
         pl.vx = c.vx * 0.7;
         pl.vy = -6;
         sfx('hit');
-        if (pl.lives <= 0) { pl.lives = 0; pl.alive = false; pl.respawn = 0; checkWin(); }
-        else               { pl.alive = false; pl.respawn = CFG.RESPAWN_FRAMES; }
+        // Credit damage to shooter
+        const shooter = Object.values(gs.players).find(p => p.idx === c.ownerIdx);
+        if (shooter && shooter !== pl) {
+          shooter.damageDealt = (shooter.damageDealt || 0) + 1;
+          shooter.hits = (shooter.hits || 0) + 1;
+        }
+        if (pl.lives <= 0) {
+          pl.lives = 0; pl.alive = false; pl.respawn = 0;
+          pl.placement = Object.values(gs.players).filter(p => p.lives > 0).length + 1;
+          checkWin();
+        } else {
+          pl.alive = false; pl.respawn = CFG.RESPAWN_FRAMES;
+        }
         return false; // coconut consumed
       }
     }
@@ -1177,11 +1446,22 @@ function checkWin() {
     gs.phase = 'over';
     const w = withLives[0] || null;
     gs.winner = w ? w.idx : -1;
+    if (w) w.placement = 1;
+
+    // Build match results sorted by placement
+    const allPlayers = Object.entries(gs.players);
+    const matchResults = allPlayers.map(([id, pl]) => ({
+      id, name: pl.name, color: pl.color,
+      placement: pl.placement || 1,
+      hits: pl.hits || 0,
+      damageDealt: pl.damageDealt || 0,
+    })).sort((a,b) => a.placement - b.placement);
+
     setTimeout(() => {
       const wName  = w ? w.name  : null;
       const wColor = w ? w.color : null;
-      broadcastAll({ type:'gameOver', winnerId: w?.id || null, winnerName: wName, winnerColor: wColor });
-      handleGameOver(w?.id || null, wName, wColor);
+      broadcastAll({ type:'gameOver', winnerId: w?.id || null, winnerName: wName, winnerColor: wColor, matchResults });
+      handleGameOver(w?.id || null, wName, wColor, matchResults);
     }, 1200);
   }
 }
@@ -1203,6 +1483,7 @@ function broadcastState() {
       facing:pl.facing, lives:pl.lives,
       alive:pl.alive, respawn:pl.respawn,
       throwCd:pl.throwCd, color:pl.color, name:pl.name, idx:pl.idx,
+      hits: pl.hits||0, damageDealt: pl.damageDealt||0, placement: pl.placement||0,
     };
   }
   broadcastAll(snap);
@@ -1212,11 +1493,22 @@ function applyState(d) {
   if (!gs) gs = { players:{}, coconuts:[], phase:'playing', winner:null };
   gs.phase    = d.phase;
   gs.coconuts = (d.coconuts || []).map(c => ({ x:c.x, y:c.y, rot:c.rot||0 }));
+
+  const prevLives = gs.players[myId] ? gs.players[myId].lives : CFG.LIVES;
+
   for (const [id, p] of Object.entries(d.players)) {
     gs.players[id] = Object.assign(gs.players[id]||{}, p);
   }
   for (const id of Object.keys(gs.players)) {
     if (!d.players[id]) delete gs.players[id];
+  }
+
+  // Detect local player just died (client only — host handles own you-died via checkWin flow)
+  if (!isHost && !youDiedShown && gs.players[myId]) {
+    const me = gs.players[myId];
+    if (prevLives > 0 && me.lives <= 0) {
+      showYouDied(me);
+    }
   }
 }
 
@@ -1530,25 +1822,99 @@ function drawWinnerOverlay() {
 }
 
 // ══════════════════════════════════════════════════════
+//  YOU DIED
+// ══════════════════════════════════════════════════════
+function showYouDied(me) {
+  youDiedShown = true;
+  const total = Object.values(gs ? gs.players : {}).length;
+  const place = me.placement || total;
+  const ordinal = ['st','nd','rd'][place-1] || 'th';
+
+  document.getElementById('ydPlace').textContent =
+    place === 1 ? '🏆 Last one standing!' : `Eliminated  ${place}${ordinal} out of ${total}`;
+  document.getElementById('ydStats').textContent =
+    `💥 ${me.hits || 0} hit${me.hits !== 1 ? 's' : ''}  ·  🥥 ${me.damageDealt || 0} damage dealt`;
+
+  const ov = document.getElementById('youDiedOverlay');
+  ov.classList.add('active');
+
+  // Fade out after 3s, keep spectate bar
+  setTimeout(() => {
+    const bg = ov.querySelector('.yd-bg');
+    const ct = ov.querySelector('.yd-content');
+    if (bg) bg.style.opacity = '0'; if (bg) bg.style.transition = 'opacity 0.8s';
+    if (ct) { ct.style.opacity = '0'; ct.style.transition = 'opacity 0.8s'; }
+    setTimeout(() => {
+      if (bg) bg.style.display = 'none';
+      if (ct) ct.style.display = 'none';
+      // Show small spectating badge in corner
+      const badge = document.createElement('div');
+      badge.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);color:rgba(255,255,255,0.7);padding:4px 14px;border-radius:20px;font-size:0.75rem;letter-spacing:2px;z-index:201;pointer-events:none';
+      badge.textContent = '👁 SPECTATING';
+      badge.id = 'spectatingBadge';
+      document.body.appendChild(badge);
+    }, 800);
+  }, 3000);
+}
+
+function hideYouDied() {
+  youDiedShown = false;
+  const ov = document.getElementById('youDiedOverlay');
+  ov.classList.remove('active');
+  const bg = ov.querySelector('.yd-bg');
+  const ct = ov.querySelector('.yd-content');
+  if (bg) { bg.style.opacity=''; bg.style.transition=''; bg.style.display=''; }
+  if (ct) { ct.style.opacity=''; ct.style.transition=''; ct.style.display=''; }
+  const badge = document.getElementById('spectatingBadge');
+  if (badge) badge.remove();
+}
+
+// Also trigger you-died for the host's own player when they die
+function checkLocalPlayerDied() {
+  if (!gs || !gs.players[myId]) return;
+  if (!youDiedShown && gs.players[myId].lives <= 0) {
+    showYouDied(gs.players[myId]);
+  }
+}
+
+// ══════════════════════════════════════════════════════
 //  GAME OVER SCREEN
 // ══════════════════════════════════════════════════════
-function handleGameOver(winnerId, winnerName, winnerColor) {
+function handleGameOver(winnerId, winnerName, winnerColor, matchResults) {
   if (gs) gs.phase = 'over';
   if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
+
+  // Save to localStorage
+  const myResult = (matchResults || []).find(r => r.id === myId);
+  if (myResult) {
+    lbAddResult(myName, winnerId === myId, myResult.damageDealt || 0);
+  }
 
   setTimeout(() => {
     if (raf) { cancelAnimationFrame(raf); raf = null; }
     teardownInput();
+    hideYouDied();
 
+    // Winner tab
     const block = document.getElementById('winnerBlock');
     if (winnerName) {
       block.innerHTML = `
         <div class="winner-emoji">🏆</div>
         <div class="winner-label">Winner!</div>
-        <div class="winner-name-big" style="color:${winnerColor||'#FFD166'}">${esc(winnerName)}</div>`;
+        <div class="winner-name-big" style="color:${winnerColor||'#FFD166'}">${esc(winnerName)}</div>
+        ${winnerId === myId ? '<div style="color:var(--mint);font-weight:900;margin-top:8px;font-size:1.1rem">🎉 That\'s you!</div>' : ''}`;
     } else {
       block.innerHTML = `<div class="winner-emoji">🤝</div><div class="winner-name-big">Draw!</div>`;
     }
+
+    // Reset tabs to winner
+    switchTab('tabWinner');
+
+    // Match stats tab
+    if (matchResults && matchResults.length) renderMatchTable(matchResults);
+
+    // All-time tab
+    renderAllTimeTable(atTab);
 
     document.getElementById('hostRestartArea').style.display   = isHost ? '' : 'none';
     document.getElementById('clientRestartArea').style.display = isHost ? 'none' : '';
